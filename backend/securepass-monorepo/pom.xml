@@ -19,6 +19,9 @@
         <module>services/user-service</module>
         <module>services/authService</module>
         <module>services/serviceRegistry</module>
+        <module>services/OrderService</module>
+        <module>services/InventoryService</module>
+        <module>services/PaymentService</module>
         
     </modules>
   <dependencies>
