@@ -11,6 +11,7 @@ import com.securepass.InventoryService.constants.InventoryKafkaConstants;
 import com.securepass.InventoryService.dtos.BaseInventoryResponseDto;
 import com.securepass.common_library.dto.OrderItemRequestDto;
 import com.securepass.common_library.dto.kafka.OrderEvent;
+import com.securepass.common_library.dto.kafka.PaymentEvent;
 import com.securepass.common_library.dto.kafka.ProductEvent;
 
 @Service
@@ -20,15 +21,17 @@ public class InventoryKafkaListenerServiceImpl implements InventoryKafkaListener
 	InventoryService inventoryService;
 	
 	@Autowired
-	KafkaTemplate< String,ProductEvent> template;
+	KafkaTemplate< String,Object> template;
 
 	@Override
-	@KafkaListener(topics = InventoryKafkaConstants.ORDER_INITIATED, groupId = InventoryKafkaConstants.ORDER_GROUP)
+	@KafkaListener(topics = InventoryKafkaConstants.ORDER_INITIATED, groupId = InventoryKafkaConstants.INVENTORY_GROUP)
 	public void consumeStocksOfProduct(OrderEvent orderEvent) {
 		System.out.println("Order initiated");
 		
 		int backTrackInd = -1;
 		int cnt = -1;
+		
+		boolean isSuccess = true;
 		
 		for(OrderItemRequestDto orderItem : orderEvent.getOrderItems()) {
 			System.out.println(orderItem.getProductId());
@@ -42,6 +45,7 @@ public class InventoryKafkaListenerServiceImpl implements InventoryKafkaListener
 						.orderId(orderEvent.getOrderId())
 						.build()
 						);
+				isSuccess = false;
 				backTrackInd = cnt;
 				break;
 			}
@@ -53,6 +57,40 @@ public class InventoryKafkaListenerServiceImpl implements InventoryKafkaListener
 			inventoryService.increaseStocksByUnits(currOrderItemRequestDto.getProductId(), currOrderItemRequestDto.getQuantity());
 			backTrackInd --;
 		}
+		
+		if(isSuccess == true) {
+			System.out.println("Inv");
+			template.send(
+					InventoryKafkaConstants.PRODUCT_ALLOCATION_SUCCEDDED,
+					ProductEvent
+					.builder()
+					.userId(orderEvent.getUserId())
+					.orderId(orderEvent.getOrderId())
+					.paymentAmount(orderEvent.getPaymentAmount())
+					.orderItems(orderEvent.getOrderItems())
+					.build()
+					);
+		}
+		
+	}
+
+	@Override
+	@KafkaListener(topics = InventoryKafkaConstants.PAYMENT_FAILED, groupId = InventoryKafkaConstants.INVENTORY_GROUP)
+	public void rollbackInventoryStocks(PaymentEvent paymentEvent) {
+		System.out.println("payment failed");
+		for(OrderItemRequestDto orderItemRequestDto : paymentEvent.getOrderItems()) {
+			inventoryService.increaseStocksByUnits(orderItemRequestDto.getProductId(), orderItemRequestDto.getQuantity());
+		}
+		
+		this.template.send(
+				InventoryKafkaConstants.PRODUCT_ALLOCATION_FAILED,
+				ProductEvent
+				.builder()
+				.orderId(paymentEvent.getOrderId())
+				.build()
+				);
+
+		
 		
 	}
 }

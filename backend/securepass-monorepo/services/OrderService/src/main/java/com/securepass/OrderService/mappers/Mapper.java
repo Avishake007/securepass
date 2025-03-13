@@ -6,6 +6,7 @@ import com.securepass.OrderService.entity.OrderItems;
 import com.securepass.OrderService.enums.OrderStatus;
 import com.securepass.common_library.dto.OrderItemRequestDto;
 
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class Mapper {
 
     public static List<OrderItems> mapListOfOrderItemRequestDtoToListOfOrderItem(
             List<OrderItemRequestDto> orderItemRequestDtos,
-            String orderId)
+            ObjectId orderId)
     {
 
        List<OrderItems> orderItemsLi = new ArrayList<>();
@@ -42,7 +43,7 @@ public class Mapper {
            orderItemsLi
                    .add(OrderItems
                            .builder()
-                           .order_id(orderId)
+                           .order_id(orderId.toString())
                            .price(orderItemRequestDto.getPrice())
                            .quantity(orderItemRequestDto.getQuantity())
                            .product_id(orderItemRequestDto.getProductId())

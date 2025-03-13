@@ -13,8 +13,8 @@ import com.securepass.common_library.dto.kafka.OrderEvent;
 @Configuration
 public class OrderKafkaConfigurations {
 	
-	@Bean
-	public KafkaTemplate<String, OrderEvent> kafkaTemplate(ProducerFactory<String, OrderEvent> producerFactory){
+	
+	KafkaTemplate<String, OrderEvent> kafkaTemplate(ProducerFactory<String, OrderEvent> producerFactory){
 		KafkaTemplate<String, OrderEvent> template = new KafkaTemplate<>(producerFactory);
 		template.setTransactionIdPrefix("order-producer");
 		
@@ -22,8 +22,8 @@ public class OrderKafkaConfigurations {
 	}
 	
 	
-	@Bean
-	public NewTopic orderInitiatedTopic(){
+	
+	NewTopic orderInitiatedTopic(){
         return TopicBuilder
                 .name(OrderKafkaConstants.ORDER_INITIATED)
                 .partitions(1)

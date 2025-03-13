@@ -17,4 +17,8 @@ import lombok.RequiredArgsConstructor;
 public class ProductEvent {
 
 	private String orderId;
+	private String userId;
+	private double paymentAmount;
+	
+	private List<OrderItemRequestDto> orderItems; 
 }

@@ -1,11 +1,18 @@
 package com.securepass.OrderService.services;
 
+import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.reactive.TransactionSynchronizationManager;
+//import org.springframework.transaction.reactive.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionSynchronization;
+//import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.securepass.OrderService.constants.OrderKafkaConstants;
 import com.securepass.OrderService.dtos.BaseOrderReponse;
@@ -27,6 +34,9 @@ public class OrderServiceImpl implements  OrderService{
     private final OrderItemRepository orderItemRepository;
     
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
 
     public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, KafkaTemplate<String, Object> template){
@@ -37,7 +47,7 @@ public class OrderServiceImpl implements  OrderService{
 
     @Transactional
     @Override
-    public BaseOrderReponse createOrder(OrderRequestDto orderRequestDto) {
+    public BaseOrderReponse createOrder(OrderRequestDto orderRequestDto){
 
         Order order = orderRepository.save(Mapper.mapOrderRequestDtoToOrderMapper(orderRequestDto));
 
@@ -47,23 +57,37 @@ public class OrderServiceImpl implements  OrderService{
         				order.getOrder_id()
         				)
         		);
+        
         System.out.println(orderRequestDto.getOrderItems());
         
+//        TransactionSynchronizationManager.registerSynchronization(
+//        		new TransactionSynchronization()  {
+//            
+//
+//			@Override
+//            public void afterCommit() {
+            	  kafkaTemplate.send(OrderKafkaConstants.ORDER_INITIATED,
+                  		OrderEvent
+                  		.builder()
+                  		.orderId(order.getOrder_id().toString())
+                  		.userId(order.getUser_id())
+                  		.paymentAmount(order.getTotal_amount())
+                  		.orderItems(orderRequestDto.getOrderItems())
+                  		.build()
+                  		);
+//            }
+//        });
         
-        this.kafkaTemplate.send(OrderKafkaConstants.ORDER_INITIATED,
-        		OrderEvent
-        		.builder()
-        		.orderId(order.getOrder_id())
-        		.orderItems(orderRequestDto.getOrderItems())
-        		.build()
-        		);
+      
         return new BaseOrderReponse("0","Order is created successfully");
+        
+        
     }
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getOrderByOrderId(String orderId) {
-		Order order = orderRepository.findById(orderId).orElse(null);
+		Order order = orderRepository.findByObjectId(new ObjectId(orderId)).orElse(null);
 		
 		return order != null ?
 				(T) OrderResponseDto
@@ -82,12 +106,12 @@ public class OrderServiceImpl implements  OrderService{
 				
 	}
 	
-	//@Transactional
+	@Transactional
 	//@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-	@KafkaListener(topics = OrderKafkaConstants.PRODUCT_ALLOCATION_FAILED, groupId = OrderKafkaConstants.PRODUCT_GROUP)
-	public BaseOrderReponse removeOrderByOrderId(ProductEvent productEvent) {
+	@KafkaListener(topics = OrderKafkaConstants.PRODUCT_ALLOCATION_FAILED, groupId = OrderKafkaConstants.ORDER_GROUP)
+	public BaseOrderReponse rollbackOrderByOrderId(ProductEvent productEvent) {
 		
-		Order order = orderRepository.findById(productEvent.getOrderId()).orElse(null);
+		Order order = orderRepository.findByObjectId(new ObjectId(productEvent.getOrderId())).orElse(null);
 		
 		order.setOrder_status(OrderStatus.CANCELLED);
 		
@@ -97,4 +121,5 @@ public class OrderServiceImpl implements  OrderService{
 		 return new BaseOrderReponse("0","Order failed"); 
 		//throw new RuntimeException();
 	}
+	
 }

@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
+
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -23,7 +25,7 @@ public class Order {
 
     @Id
     @Field("orderId")
-    private String order_id;
+    private ObjectId  order_id;
 
     @Field(name = "userId")
     private String user_id;
