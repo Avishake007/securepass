@@ -1,16 +1,26 @@
-package com.securepass.InventoryService.services;
+package com.securepass.InventoryService.services.implementation;
+
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.securepass.InventoryService.constants.InventoryKafkaConstants;
+import com.securepass.InventoryService.dtos.AllInventoryResponseDto;
 import com.securepass.InventoryService.dtos.BaseInventoryResponseDto;
 import com.securepass.InventoryService.dtos.InventoryRequestDto;
 import com.securepass.InventoryService.dtos.InventoryResponseDto;
 import com.securepass.InventoryService.entities.Inventory;
+import com.securepass.InventoryService.exceptions.InventoryNotFoundException;
 import com.securepass.InventoryService.mappers.Mapper;
 import com.securepass.InventoryService.repositories.InventoryRepository;
+import com.securepass.InventoryService.services.specification.InventoryService;
 import com.securepass.common_library.dto.kafka.ProductEvent;
 
 @Service
@@ -24,6 +34,7 @@ public class InventoryServiceImpl implements InventoryService{
 	
 
 	@Override
+	@Transactional
 	public BaseInventoryResponseDto createOrder(InventoryRequestDto inventoryRequestDto) {
 		
 		Inventory inventory = Mapper.mapInventoryRequestDtoToInventory(inventoryRequestDto);
@@ -37,9 +48,11 @@ public class InventoryServiceImpl implements InventoryService{
 		
 	}
 	
-	public InventoryResponseDto getInventoryById(String productId) {
+	@Override
+	@Cacheable(value = "inventory", key="#id", condition = "#id != null")
+	public InventoryResponseDto getInventoryById(String productId) throws InventoryNotFoundException{
 		
-		Inventory currInventory = inventoryRepository.findById(productId).orElseThrow();
+		Inventory currInventory = inventoryRepository.findById(productId).orElseThrow(() -> new InventoryNotFoundException("Product with id "+ productId + " is not available"));
 		
 		return InventoryResponseDto
 				.builder()
@@ -53,6 +66,7 @@ public class InventoryServiceImpl implements InventoryService{
 	
 
 	@Override
+	@CachePut(cacheNames = "inventory")
 	public BaseInventoryResponseDto reduceStocksByUnits( String productId, int units) {
 		
 		Inventory inventory = getInventoryById(productId).getInventory();
@@ -78,8 +92,10 @@ public class InventoryServiceImpl implements InventoryService{
 	}
 
 	@Override
-	public BaseInventoryResponseDto increaseStocksByUnits(String productId, int units) {
-		Inventory inventory = getInventoryById(productId).getInventory();
+	//@CachePut(value = {"inventory","inventories"})
+	@Caching(evict = {@CacheEvict(cacheNames = "inventories" , allEntries = true)})
+	public BaseInventoryResponseDto increaseStocksByUnits(String id, int units) {
+		Inventory inventory = getInventoryById(id).getInventory();
 		
 		int currStocks = inventory.getStock();
 		inventory.setStock(currStocks + units);
@@ -91,6 +107,23 @@ public class InventoryServiceImpl implements InventoryService{
 				.responseCode("0")
 				.responseStatus("Inventory updated successfully")
 				.build();
+	}
+
+	@Override
+	//@Cacheable(value = "inventories")
+	public AllInventoryResponseDto getAllInventories() {
+		
+		List<Inventory> inventoryLi= inventoryRepository.findAll();
+		
+		return AllInventoryResponseDto
+				.builder()
+				.responseCode("0")
+				.responseStatus(inventoryLi.size() + " inventories fetched")
+				.inventoryList(inventoryLi)
+				.build();
+		
+		
+		
 	}
 
 }

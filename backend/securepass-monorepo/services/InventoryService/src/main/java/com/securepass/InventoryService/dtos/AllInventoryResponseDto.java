@@ -1,6 +1,9 @@
 package com.securepass.InventoryService.dtos;
 
 import java.io.Serializable;
+import java.util.List;
+
+import com.securepass.InventoryService.entities.Inventory;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,9 +14,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class BaseInventoryResponseDto implements Serializable{
-
-	private String responseCode;
+public class AllInventoryResponseDto extends BaseInventoryResponseDto implements Serializable{
 	
-	private String responseStatus;
+	private List<Inventory> inventoryList; 
+	
 }

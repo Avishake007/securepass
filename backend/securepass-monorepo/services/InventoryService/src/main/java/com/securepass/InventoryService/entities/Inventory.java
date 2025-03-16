@@ -1,5 +1,6 @@
 package com.securepass.InventoryService.entities;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import org.springframework.data.annotation.Id;
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Inventory {
+public class Inventory implements Serializable{
 
 	@Id
 	private String id;

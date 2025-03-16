@@ -1,4 +1,4 @@
-package com.securepass.InventoryService.services;
+package com.securepass.InventoryService.services.implementation;
 
 import java.util.List;
 
@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.securepass.InventoryService.constants.InventoryKafkaConstants;
 import com.securepass.InventoryService.dtos.BaseInventoryResponseDto;
+import com.securepass.InventoryService.services.specification.InventoryKafkaListenerService;
+import com.securepass.InventoryService.services.specification.InventoryService;
 import com.securepass.common_library.dto.OrderItemRequestDto;
 import com.securepass.common_library.dto.kafka.OrderEvent;
 import com.securepass.common_library.dto.kafka.PaymentEvent;

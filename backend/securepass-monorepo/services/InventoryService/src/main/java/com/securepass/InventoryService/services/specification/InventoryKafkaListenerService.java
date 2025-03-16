@@ -1,4 +1,4 @@
-package com.securepass.InventoryService.services;
+package com.securepass.InventoryService.services.specification;
 
 import com.securepass.common_library.dto.kafka.OrderEvent;
 import com.securepass.common_library.dto.kafka.PaymentEvent;

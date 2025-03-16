@@ -1,5 +1,6 @@
 package com.securepass.InventoryService.dtos;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import com.securepass.InventoryService.entities.Inventory;
@@ -13,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class InventoryResponseDto extends BaseInventoryResponseDto{
+public class InventoryResponseDto extends BaseInventoryResponseDto implements Serializable{
 	
 	private Inventory inventory;
 	
