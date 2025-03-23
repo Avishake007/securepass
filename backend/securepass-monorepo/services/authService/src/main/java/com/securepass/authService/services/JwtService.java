@@ -42,7 +42,7 @@ public class JwtService {
 				.add(claims)
 				.subject(emailId)
 				.issuedAt(new Date(System.currentTimeMillis()))
-				.expiration(new Date(System.currentTimeMillis() + 60*1000*1))
+				.expiration(new Date(System.currentTimeMillis() + 60*1000*60))
 				.and()
 				.signWith(getKey())
 				.compact();
@@ -61,7 +61,7 @@ public String generateRefreshToken(String emailId, String role) {
 				.add(claims)
 				.subject(emailId)
 				.issuedAt(new Date(System.currentTimeMillis()))
-				.expiration(new Date(System.currentTimeMillis() + 60*1000*3))
+				.expiration(new Date(System.currentTimeMillis() + 60*1000*60*24*7))
 				.and()
 				.signWith(getKey())
 				.compact();

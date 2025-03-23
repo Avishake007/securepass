@@ -49,6 +49,7 @@ public class InventoryController {
 		}
 		
 		BaseInventoryResponseDto response = inventoryService.createOrder(inventoryRequestDto);
+	
 		
 		idempotencyService.saveResponse(idempotentKey, response);
 		System.out.println("Response : "+response);
