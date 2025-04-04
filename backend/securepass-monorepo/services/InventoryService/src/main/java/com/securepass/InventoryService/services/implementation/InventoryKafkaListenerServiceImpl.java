@@ -1,5 +1,6 @@
 package com.securepass.InventoryService.services.implementation;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,8 +8,11 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import com.google.gson.Gson;
 import com.securepass.InventoryService.constants.InventoryKafkaConstants;
 import com.securepass.InventoryService.dtos.BaseInventoryResponseDto;
+import com.securepass.InventoryService.entities.OutboxEvent;
+import com.securepass.InventoryService.repositories.OutboxEventRepository;
 import com.securepass.InventoryService.services.specification.InventoryKafkaListenerService;
 import com.securepass.InventoryService.services.specification.InventoryService;
 import com.securepass.common_library.dto.OrderItemRequestDto;
@@ -21,6 +25,13 @@ public class InventoryKafkaListenerServiceImpl implements InventoryKafkaListener
 	
 	@Autowired
 	InventoryService inventoryService;
+	
+	@Autowired
+	OutboxEventRepository outboxEventRepository;
+	
+	
+	 private final Gson gson = new Gson();
+
 	
 	@Autowired
 	KafkaTemplate< String,Object> template;
@@ -40,13 +51,20 @@ public class InventoryKafkaListenerServiceImpl implements InventoryKafkaListener
 			BaseInventoryResponseDto baseInventoryResponseDto = inventoryService.reduceStocksByUnits( orderItem.getProductId(), orderItem.getQuantity());
 			System.out.println("BaseInventoryResponseDto "+baseInventoryResponseDto);
 			if(baseInventoryResponseDto == null) {
-				this.template.send(
-						InventoryKafkaConstants.PRODUCT_ALLOCATION_FAILED,
-						ProductEvent
+				outboxEventRepository.save(
+						OutboxEvent
 						.builder()
-						.orderId(orderEvent.getOrderId())
+						.aggregateType(InventoryKafkaConstants.PRODUCT_ALLOCATION_FAILED)
+						.aggregateId(orderEvent.getOrderId())
+						.eventType("Inventory Created")
+						.payload(gson.toJson(ProductEvent
+								.builder()
+								.orderId(orderEvent.getOrderId())
+								.build()))
+						.createdAt(LocalDateTime.now() )
 						.build()
 						);
+				
 				isSuccess = false;
 				backTrackInd = cnt;
 				break;

@@ -25,12 +25,12 @@ public class PaymentServiceImpl implements PaymentService {
 	
 	@Transactional
 	@Override
-	public BasePaymentResponseDto createPayment(PaymentRequestDto paymentRequestDto) throws PaymentNotInitiatedException{
+	public BasePaymentResponseDto createPayment(PaymentRequestDto paymentRequestDto) {
 		
 		try {
 			System.out.println("iop1");
-			throw new PaymentNotInitiatedException("Payment not initiated");
-			//paymentRepository.save(Mapper.mapPaymentRequestDtoToPayment(paymentRequestDto));
+			
+			paymentRepository.save(Mapper.mapPaymentRequestDtoToPayment(paymentRequestDto));
 			//System.out.println("iop2");
 			
 		}
@@ -40,7 +40,7 @@ public class PaymentServiceImpl implements PaymentService {
 		
 		
 		
-		//return new BasePaymentResponseDto("0","SUCCESS");
+		return new BasePaymentResponseDto("0","SUCCESS");
 		
 	}
 

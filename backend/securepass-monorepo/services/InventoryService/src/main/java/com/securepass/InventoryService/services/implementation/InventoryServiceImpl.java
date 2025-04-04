@@ -1,5 +1,7 @@
 package com.securepass.InventoryService.services.implementation;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,15 +13,18 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.gson.Gson;
 import com.securepass.InventoryService.constants.InventoryKafkaConstants;
 import com.securepass.InventoryService.dtos.AllInventoryResponseDto;
 import com.securepass.InventoryService.dtos.BaseInventoryResponseDto;
 import com.securepass.InventoryService.dtos.InventoryRequestDto;
 import com.securepass.InventoryService.dtos.InventoryResponseDto;
 import com.securepass.InventoryService.entities.Inventory;
+import com.securepass.InventoryService.entities.OutboxEvent;
 import com.securepass.InventoryService.exceptions.InventoryNotFoundException;
 import com.securepass.InventoryService.mappers.Mapper;
 import com.securepass.InventoryService.repositories.InventoryRepository;
+import com.securepass.InventoryService.repositories.OutboxEventRepository;
 import com.securepass.InventoryService.services.specification.InventoryService;
 import com.securepass.common_library.dto.kafka.ProductEvent;
 
@@ -31,6 +36,8 @@ public class InventoryServiceImpl implements InventoryService{
 	
 	
 	
+	
+	
 
 	@Override
 	@Transactional
@@ -38,6 +45,8 @@ public class InventoryServiceImpl implements InventoryService{
 		
 		Inventory inventory = Mapper.mapInventoryRequestDtoToInventory(inventoryRequestDto);
 		inventoryRepository.save(inventory);
+		
+		
 		
 		return BaseInventoryResponseDto
 				.builder()
